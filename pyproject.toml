@@ -1,0 +1,17 @@
+[project]
+name = "farkle"
+version = "0.1.0"
+description = "A Farkle scorer written in python."
+requires-python = ">=3.14"
+dependencies = [
+    "pytest-cov>=7.0.0",
+]
+
+[tool.pytest]
+pythonpath = ["src"]
+addopts = [
+    "--import-mode=importlib",
+    "--cov=farkle",
+    "--cov-report=term-missing",
+    "-v"
+]
