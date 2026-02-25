@@ -1,18 +1,13 @@
-from collections.abc import Iterable
+from typing import Iterable
 
 triple_score: dict[int, int] = dict(zip((1, 2, 3, 4, 5, 6), (1000, 200, 300, 400, 500, 600)))
 
 
 def best_score(dice: Iterable[int], initial_score: int = 0) -> tuple[int, ...]:
-    die_counts: list[int] = [0] * 6
-
-    num_dice = 0
-    for die in dice:
-        die_counts[die - 1] += 1
-        num_dice += 1
 
     score = 0
     extra_dice: list[int] = []
+    num_dice, die_counts = count_dice(dice)
 
     if num_dice == 6 and all(count == 1 for count in die_counts):
         score = 1200
@@ -28,36 +23,49 @@ def best_score(dice: Iterable[int], initial_score: int = 0) -> tuple[int, ...]:
             if count == 5:
                 score = triple_score[die + 1] * 4
                 break
-        try:
-            extra_dice.append(die_counts.index(1) + 1)
-        except ValueError:
-            pass
+        extra_dice = add_to_extra_dice(die_counts, extra_dice)
     elif 4 <= num_dice <= 6 and die_counts.count(4) == 1:
         for die, count in enumerate(die_counts):
             if count == 4:
                 score = triple_score[die + 1] * 2
                 break
-        for die, count in enumerate(die_counts):
-            if 1 <= count <= 2:
-                extra_dice += [die + 1] * die_counts[die]
+        extra_dice = add_to_extra_dice(die_counts, extra_dice)
     elif 3 <= num_dice <= 6 and 0 < die_counts.count(3) <= 2:
         for die, count in enumerate(die_counts):
             if count == 3:
                 score += triple_score[die + 1]
-        for die, count in enumerate(die_counts):
-            if 1 <= count <= 2:
-                extra_dice += [die + 1] * die_counts[die]
+        extra_dice = add_to_extra_dice(die_counts, extra_dice)
     else:
         score = 0
 
     if score == 0:
         extra_dice += dice
 
+    ones, fives, extra_dice = count_single_ones_and_fives(extra_dice)
+
+    score += ones * 100 + fives * 50
+
+    return initial_score + score, *sorted(extra_dice)
+
+
+def count_single_ones_and_fives(extra_dice: list[int]) -> tuple[int, int, list[int]]:
     ones = extra_dice.count(1)
     fives = extra_dice.count(5)
     extra_dice = [die for die in extra_dice if die not in (1, 5)]
+    return ones, fives, extra_dice
 
-    score += ones * 100
-    score += fives * 50
 
-    return initial_score + score, *sorted(extra_dice)
+def count_dice(dice: Iterable[int]) -> tuple[int, list[int]]:
+    die_counts = [0] * 6
+    num_dice = 0
+    for die in dice:
+        die_counts[die - 1] += 1
+        num_dice += 1
+    return num_dice, die_counts
+
+
+def add_to_extra_dice(die_counts: list[int], extra_dice: list[int]) -> list[int]:
+    for die, count in enumerate(die_counts):
+        if 1 <= count <= 2:
+            extra_dice += [die + 1] * die_counts[die]
+    return extra_dice
